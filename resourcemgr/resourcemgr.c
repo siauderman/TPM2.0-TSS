@@ -110,6 +110,22 @@ int GetNumRspHandles( TPM_CC commandCode, TPML_CCA *supportedCommands )
     return rval;
 }
 
+static TSS2_RC rmRecvBytes( SOCKET sock, unsigned char *data, int len )
+{
+    TSS2_RC result = 0;
+    result = recvBytes( sock, data, len);
+    if (result != TSS2_RC_SUCCESS) {
+        DebugPrintf( NO_PREFIX, "In rmRecvBytes, recv failed (socket: 0x%x) with error: %d\n", sock, WSAGetLastError() );
+        return TSS2_TCTI_RC_IO_ERROR;
+    }
+#ifdef DEBUG_SOCKETS
+    DebugPrintf( NO_PREFIX, "Receive Bytes from socket #0x%x: \n", sock );
+    DebugPrintBuffer( NO_PREFIX, data, len );
+#endif
+
+    return TSS2_RC_SUCCESS;
+}
+
 int printRMTables = 0;
 int rmCommandDebug = 0;
 int commandDebug = 0;
@@ -2261,13 +2277,13 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
         }
         
         // Receive TPM Send or SESSION end command
-        rval = recvBytes( serverStruct->connectSock, (unsigned char*) &sendCmd, 4 );
+        rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &sendCmd, 4 );
         if( rval != TSS2_RC_SUCCESS )
         {
             tpmCmdServerBreakValue = 2;
             goto tpmCmdServerDone;
         }
-                 
+
         sendCmd = CHANGE_ENDIAN_DWORD( sendCmd );
 
         if( sendCmd == TPM_SESSION_END )
@@ -2286,7 +2302,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             // sendCmd == MS_SIM_TPM_SEND_COMMAND
 
             // Receive the locality.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char*) &locality, 1 );
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &locality, 1 );
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2296,7 +2312,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             (( TSS2_TCTI_CONTEXT_INTEL *)downstreamTctiContext )->status.locality = locality;
 
             // Receive debug level.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char*) &debugLevel, 1 );
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &debugLevel, 1 );
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2306,7 +2322,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             SetDebug( debugLevel );
 
             // Receive status bits.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char*) &statusBits, 1 );
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &statusBits, 1 );
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2317,7 +2333,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             (( TSS2_TCTI_CONTEXT_INTEL *)downstreamTctiContext )->status.rmDebugPrefix = NO_PREFIX;
 
             // Receive number of bytes.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char*) &numBytes, 4);
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &numBytes, 4);
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2328,7 +2344,7 @@ UINT8 TpmCmdServer( SERVER_STRUCT *serverStruct )
             numBytes = CHANGE_ENDIAN_DWORD( numBytes );
 
             // Receive the TPM command bytes from calling application.
-            rval = recvBytes( serverStruct->connectSock, (unsigned char *)cmdBuffer, numBytes);
+            rval = rmRecvBytes( serverStruct->connectSock, (unsigned char *)cmdBuffer, numBytes);
             if( rval != TSS2_RC_SUCCESS )
             {
                 CreateErrorResponse( TSS2_TCTI_RC_IO_ERROR );
@@ -2504,13 +2520,12 @@ UINT8 OtherCmdServer( SERVER_STRUCT *serverStruct )
             goto retOtherCmdServer;
         }
 
-        rval = recvBytes( serverStruct->connectSock, (unsigned char*) &command, 4);
-
+        rval = rmRecvBytes( serverStruct->connectSock, (unsigned char*) &command, 4);
         if( rval != TSS2_RC_SUCCESS )
         {
             goto retOtherCmdServer;
         }
-        
+
         command = CHANGE_ENDIAN_DWORD( command );
 
         if( !simulator )
