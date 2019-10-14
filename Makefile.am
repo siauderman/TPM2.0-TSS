@@ -33,7 +33,7 @@ AM_CFLAGS       = -I$(srcdir)/include
 AM_CXXFLAGS     = $(AM_CFLAGS)
 
 # stuff to build, what that stuff is, and where/if to install said stuff
-sbin_PROGRAMS   = $(resourcemgr)
+sbin_PROGRAMS   = $(resourcemgr) $(tpmtcticlient)
 noinst_PROGRAMS = $(tpmclient) $(tpmtest)
 lib_LTLIBRARIES = $(libsapi) $(libtcti_device) $(libtcti_socket)
 
@@ -196,6 +196,11 @@ test_tpmtest_tpmtest_CXXFLAGS = $(TPMTEST_INC) $(AM_CXXFLAGS)
 test_tpmtest_tpmtest_LDADD    = $(libsapi) $(libtcti_socket) $(libtcti_device)
 test_tpmtest_tpmtest_SOURCES  = $(TPMTEST_CXX) $(COMMON_C) $(SAMPLE_C)
 
+test_tpmtcticlient_tpmtcticlient_CFLAGS   = $(TPMTCTICLIENT_INC) $(AM_CFLAGS)
+test_tpmtcticlient_tpmtcticlient_CXXFLAGS = $(TPMTCTICLIENT_INC) $(TCTICOMMON_INC) $(TCTIDEVICE_INC) $(AM_CXXFLAGS)
+test_tpmtcticlient_tpmtcticlient_LDADD    = $(libsapi) $(libtcti_socket) $(libtcti_device)
+test_tpmtcticlient_tpmtcticlient_SOURCES  = $(TPMTCTICLIENT_CXX) $(COMMON_C) 
+
 %.pc : %.pc.in
 	if [ ! -d $(dir $@) ]; then mkdir -p $(dir $@); fi
 	sed -e "s,[@]VERSION[@],$(PACKAGE_VERSION),g; \
@@ -231,9 +236,17 @@ TPMTEST_INC = -I$(srcdir)/include -I$(srcdir)/common \
     -I$(srcdir)/test/common/sample -I$(srcdir)/resourcemgr
 TPMTEST_CXX = test/tpmtest/tpmtest.cpp
 
+TPMTCTICLIENT_INC = -I$(srcdir)/include -I$(srcdir)/common \
+    -I$(srcdir)/test/tpmclient -I$(srcdir)/test/tpmtcticlient \
+    -I$(srcdir)/sysapi/include \
+    -I$(srcdir)/test/common/sample -I$(srcdir)/resourcemgr
+TPMTCTICLIENT_CXX = test/tpmtcticlient/tpmtcticlient.cpp
+
 libsapi = sysapi/libsapi.la
 libtcti_device = tcti/libtcti-device.la
 libtcti_socket = tcti/libtcti-socket.la
 resourcemgr = resourcemgr/resourcemgr
 tpmclient   = test/tpmclient/tpmclient
 tpmtest     = test/tpmtest/tpmtest
+tpmtcticlient = test/tpmtcticlient/tpmtcticlient
+
