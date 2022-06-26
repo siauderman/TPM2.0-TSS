@@ -386,8 +386,9 @@ TPMS_AUTH_COMMAND *nullSessionDataArray[1] = { &nullSessionData };
 TPMS_AUTH_RESPONSE *nullSessionDataOutArray[1] = { &nullSessionDataOut };
 TSS2_SYS_CMD_AUTHS nullSessionsData = { 1, &nullSessionDataArray[0] };
 TSS2_SYS_RSP_AUTHS nullSessionsDataOut = { 1, &nullSessionDataOutArray[0] };
-TPM2B_NONCE nullSessionNonce, nullSessionNonceOut;
-TPM2B_AUTH nullSessionHmac;
+extern TPM2B_NONCE nullSessionNonce;
+TPM2B_NONCE nullSessionNonceOut;
+extern TPM2B_AUTH nullSessionHmac;
 
 void CheckFailed( UINT32 rval, UINT32 expectedTpmErrorCode )
 {

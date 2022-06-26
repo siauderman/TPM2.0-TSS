@@ -193,7 +193,7 @@ TPM_RC StartAuthSessionWithParams( SESSION **session, TPMI_DH_OBJECT tpmKey, TPM
 // with add, find, and remove entries, instead of a fixed
 // length array.
 //
-ENTITY entities[MAX_NUM_ENTITIES+1];
+extern ENTITY entities[MAX_NUM_ENTITIES+1];
 
 //
 // This function calculates the session HMAC

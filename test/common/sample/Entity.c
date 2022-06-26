@@ -33,6 +33,7 @@
 extern "C" {
 #endif
 
+ENTITY entities[MAX_NUM_ENTITIES+1];
 
 void InitEntities()
 {
